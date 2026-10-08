@@ -161,7 +161,14 @@ class Construtor:
         bm = self._bm(mat)
         rot = Matrix.Rotation(rot_z, 4, 'Z') if rot_z else None
         r = bmesh.ops.create_cube(bm, size=1.0, matrix=_matriz(centro, tam, rot))
-        arestas = list({e for v in r['verts'] for e in v.link_edges})
+        # arestas na ordem dos vértices (sem depender da ordem de um set do Python). Obs.: o chanfro
+        # e o toro do bmesh ainda numeram vértices de forma variável, então um .glb regerado pode
+        # mudar de bytes (e de ?v=) com a mesma geometria
+        arestas = []
+        for v in r['verts']:
+            for e in v.link_edges:
+                if e not in arestas:
+                    arestas.append(e)
         ch = min(chanfro, min(tam) * 0.45)
         if ch > 1e-4:
             bmesh.ops.bevel(bm, geom=arestas, offset=ch, segments=segmentos, profile=0.5,
