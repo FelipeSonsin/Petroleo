@@ -1,0 +1,16 @@
+# dependências e build (o site recria tudo com npm install / npm run build)
+node_modules/
+site/dist/
+
+# cópias de segurança do Blender e cache do Python
+*.blend1
+*.blend2
+__pycache__/
+
+# configurações locais do editor e do agente
+.claude/
+
+# arquivos do sistema
+Thumbs.db
+desktop.ini
+.DS_Store

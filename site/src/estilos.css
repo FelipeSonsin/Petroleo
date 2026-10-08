@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import 'lenis/dist/lenis.css';
+
+/* os modelos que o Blender exporta ficam em public/: o Tailwind não deve vigiá-los
+   (senão cada exportação recarregaria a página inteira em vez de só trocar o modelo) */
+@source not "../public";
+
+@theme {
+  --font-sans: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --color-noite: #02060f;
+  --color-tinta: #e2eaff;
+  --color-nevoa: #a3b4d6;
+  --color-apagado: #5f7499;
+  --color-brilho: #59c8ff;
+  --color-oleo: #ffb547;
+  --color-linha: rgb(150 180 255 / 0.16);
+}
+
+@layer base {
+  html {
+    background: var(--color-noite);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    margin: 0;
+    background: var(--color-noite);
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: rgb(89 200 255 / 0.35);
+    color: #fff;
+  }
+  html::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  html {
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  /* títulos largos em caixa alta, como na referência */
+  .titulo {
+    font-stretch: 118%;
+    font-weight: 620;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    line-height: 1.04;
+    text-wrap: balance;
+    text-shadow:
+      0 0 28px rgb(89 200 255 / 0.22),
+      0 2px 18px rgb(0 0 0 / 0.55);
+  }
+  .rotulo {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+  }
+  .corpo {
+    text-wrap: pretty;
+    text-shadow: 0 1px 14px rgb(0 0 0 / 0.75);
+  }
+  .letra {
+    display: inline-block;
+    will-change: opacity, transform;
+  }
+  .palavra {
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .botao-hud {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    transition: color 0.25s, background-color 0.25s, border-color 0.25s;
+  }
+}
+
+@keyframes descer {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(220%);
+  }
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letra {
+    will-change: auto;
+  }
+}
