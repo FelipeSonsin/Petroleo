@@ -9,7 +9,7 @@ import { cena, type Qualidade } from '../estado';
 import { CORTE_Z, POCOS, POCO_PRINCIPAL, SONDA } from '../mundo';
 import { precarregar, useModelo } from './modelos';
 import { DUTOS, alturaFundo, fbm2, ruido2 } from './trajetos';
-import { GLSL_RUIDO, texturaBrilho } from './util';
+import { GLSL_RUIDO, semReflexo, texturaBrilho } from './util';
 import { sanear } from './Fluxos';
 
 /** Plano que esconde o lado da câmera durante o corte geológico (o fundo some até a face do corte). */
@@ -357,6 +357,8 @@ function Rov() {
   useLayoutEffect(() => {
     alvo.position.set(p.x, alturaFundo(p.x, p.z) + 2.2, p.z);
   }, [alvo, p]);
+  // o corpo do ROV sai do reflexo do mar (a luz dele fica, ver CampoSubmarino)
+  useLayoutEffect(() => semReflexo(grupo.current), []);
 
   useFrame((estado) => {
     const t = estado.clock.elapsedTime;
@@ -473,14 +475,18 @@ export function CampoSubmarino({ qualidade }: { qualidade: Qualidade }) {
   return (
     <group>
       <AtualizarCorte />
-      <Relevo />
-      <Pedras />
-      <LuzesDoCampo />
-      <Dutos />
-      <Arvores />
+      {/* tudo isto fica debaixo d'água: fora do reflexo do mar (a luz do ROV não: tirar uma luz
+          de um desenho muda a contagem de luzes e obriga a recompilar os materiais) */}
+      <group ref={semReflexo}>
+        <Relevo />
+        <Pedras />
+        <LuzesDoCampo />
+        <Dutos />
+        <Arvores />
+        <Perfuracao />
+        <NeveMarinha qualidade={qualidade} />
+      </group>
       <Rov />
-      <Perfuracao />
-      <NeveMarinha qualidade={qualidade} />
     </group>
   );
 }

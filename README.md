@@ -40,7 +40,7 @@ Durante a apresentação:
 | Computador lento | botão "Gráficos alto/leve" (lembrado no navegador) |
 | Abrir direto numa cena | endereço com `#id`, ex.: `http://localhost:4173/#torre` (ids em `site/src/roteiro.ts`) |
 
-Desempenho medido: cena pronta em ~2 s e 60 fps numa GPU dedicada (RTX 4050). No modo "leve" a resolução, o reflexo do mar e o número de partículas caem.
+Desempenho medido (rolando a jornada inteira, Chrome com Direct3D, GPU RTX 4050): **60 fps constantes, nenhum quadro acima de 17 ms**, de 1280×720 até 2560×1440 com escala de 150%, inclusive rolando rápido. Se o computador não acompanhar por alguns segundos seguidos, a resolução do 3D desce sozinha um degrau por vez (nunca sobe de volta, para a nitidez não ficar oscilando). No modo "leve" a resolução, o reflexo do mar e o número de partículas caem.
 
 ---
 
@@ -172,13 +172,16 @@ Convenções que o site usa (não renomeie sem ajustar o código):
 3. **Evite SpotLight** (deixou o carregamento 20× mais lento no Windows). Prefira poucas PointLight e brilho emissivo + bloom.
 4. Planos vistos "de trás" precisam de `side: DoubleSide`.
 5. Partículas que correm dentro de tubos são empurradas um pouco para a câmera no vertex shader; sem isso o próprio tubo as esconde.
-6. O carregamento compila **todos** os shaders antes de mostrar a cena (`Pronto` em `Experiencia.tsx`). Mantenha, senão cada etapa nova engasga na primeira vez.
+6. O carregamento compila **todos** os shaders e depois **desenha a cena inteira uma vez** (`aquecer` em `Experiencia.tsx`, com tudo visível e sem corte por câmera) antes de mostrar a cena. Só compilar não basta: no Direct3D a montagem final do shader e o envio das malhas acontecem no primeiro desenho, e a rolagem congelava até 1 s quando o corte geológico ou a costa apareciam pela primeira vez.
 7. Teste no Chrome ou Edge do Windows. Se a aba ficar em segundo plano durante o carregamento, o navegador pausa a animação.
 8. A pasta `site/public` fica fora da varredura do Tailwind (`@source not "../public"` em `estilos.css`): sem isso, cada `.glb` exportado pelo Blender recarregava a página inteira.
 9. O projeto está no OneDrive, que às vezes "toca" arquivos ao sincronizar; o plugin só avisa o site quando o conteúdo do modelo realmente muda.
 10. Na troca ao vivo de um modelo, só as **geometrias** da versão antiga são liberadas. Não descarte os materiais: isso libera programas de shader que a versão nova ainda vai usar, e recompilar no Direct3D trava a página.
 11. **Detalhe procedural tem que sumir de longe.** Padrões finos (laminação das rochas, relevo do terreno, juntas de chapa) usam `fwidth` para desaparecer quando ficam menores que alguns pixels; sem isso eles "chuviscam" (o terreno da costa chegou a parecer quadriculado).
 12. **Debaixo d'água nada é preto chapado.** A névoa e o fundo seguem o degradê de `Ambiente.tsx` (azul-esverdeado perto da superfície, azul-escuro no fundo), a luz hemisférica nunca zera e `Submerso.tsx` dá brilho (raios, plâncton). Partículas aditivas devem ser apagadas pela neblina (multiplicar pelo fator dela), não "clareadas" para a cor da névoa.
+13. **O reflexo do mar redesenha a cena a cada quadro.** Tudo o que só aparece debaixo d'água, no corte geológico ou longe do mar (fundo do mar, corte, fluxos, refinaria, partículas submersas) entra em `foraDoReflexo` (use `ref={semReflexo}` de `util.ts`) e fica escondido só durante o desenho do reflexo. Não ponha luzes nesses grupos (ver regra 2).
+14. **Partículas animadas pela CPU só são calculadas quando aparecem na tela** (`Corrente` testa a esfera do trajeto contra a câmera; o trânsito da costa para quando a câmera está longe).
+15. **Não re-renderize a árvore da cena.** `Mundo`, `Efeitos` e `CameraRig` são memorizados em `Experiencia.tsx`; mudar a resolução ou o capítulo não pode redesenhar os componentes 3D (e nenhum componente 3D deve depender de estado do React que muda durante a rolagem).
 
 ---
 

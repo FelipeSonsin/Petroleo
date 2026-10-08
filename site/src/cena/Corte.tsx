@@ -8,7 +8,7 @@ import {
 import { cena, leitura } from '../estado';
 import { CORTE_BASE, CORTE_LARGURA, CORTE_Z, FUNDO, POCOS, SISMICO, SONDA, camadas } from '../mundo';
 import { meioReservatorio } from './trajetos';
-import { GLSL_RUIDO } from './util';
+import { GLSL_RUIDO, semReflexo } from './util';
 
 const X_MIN = -CORTE_LARGURA / 2;
 const AMOSTRAS = 1024;
@@ -439,7 +439,7 @@ export function Corte() {
   });
 
   return (
-    <group>
+    <group ref={semReflexo}>
       <mesh ref={malhaAgua} name="corte_agua" geometry={geoAgua} material={agua} position={[0, FUNDO / 2, CORTE_Z]} renderOrder={-2} />
       <mesh
         name="corte_rocha"

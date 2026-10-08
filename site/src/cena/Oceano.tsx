@@ -7,7 +7,7 @@ import {
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { cena, type Qualidade } from '../estado';
 import { CORTE_Z } from '../mundo';
-import { GLSL_RUIDO } from './util';
+import { GLSL_RUIDO, foraDoReflexo } from './util';
 
 const TAMANHO = 90000;
 
@@ -21,7 +21,8 @@ export function Oceano({ qualidade }: { qualidade: Qualidade }) {
 
   const agua = useMemo(() => {
     normais.wrapS = normais.wrapT = RepeatWrapping;
-    const res = qualidade === 'alta' ? 768 : 256;
+    // o reflexo é distorcido pelas ondas: resolução menor quase não muda a imagem e alivia a placa de vídeo
+    const res = qualidade === 'alta' ? 512 : 256;
     const w = new Water(new PlaneGeometry(TAMANHO, TAMANHO), {
       textureWidth: res,
       textureHeight: res,
@@ -34,6 +35,22 @@ export function Oceano({ qualidade }: { qualidade: Qualidade }) {
     });
     w.rotation.x = -Math.PI / 2;
     w.material.uniforms.size.value = 0.55;
+    // o reflexo redesenha a cena: esconde nele o que não aparece acima d'água (ver foraDoReflexo)
+    const original = w.onBeforeRender;
+    w.onBeforeRender = function (...args: Parameters<typeof original>) {
+      const escondidos = [];
+      for (const o of foraDoReflexo) {
+        if (o.visible) {
+          o.visible = false;
+          escondidos.push(o);
+        }
+      }
+      try {
+        original.apply(this, args);
+      } finally {
+        for (const o of escondidos) o.visible = true;
+      }
+    };
     return w;
   }, [normais, qualidade]);
 
@@ -83,6 +100,7 @@ export function Oceano({ qualidade }: { qualidade: Qualidade }) {
     const malha = new Mesh(new PlaneGeometry(TAMANHO, TAMANHO), m);
     malha.rotation.x = Math.PI / 2;
     malha.position.y = -0.05;
+    foraDoReflexo.add(malha);
     return malha;
   }, []);
 

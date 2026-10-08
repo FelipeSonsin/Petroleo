@@ -1,4 +1,20 @@
-import { CanvasTexture, SRGBColorSpace } from 'three';
+import { CanvasTexture, SRGBColorSpace, type Object3D } from 'three';
+
+/**
+ * Objetos que não precisam aparecer no reflexo do mar (tudo o que fica debaixo d'água, partículas,
+ * a refinaria longe da margem...). O Oceano os esconde só durante o desenho do reflexo: a água
+ * redesenha a cena inteira a cada quadro, e isso era metade do trabalho da placa de vídeo.
+ */
+export const foraDoReflexo = new Set<Object3D>();
+
+/** Registra um objeto em foraDoReflexo enquanto o componente estiver montado (use como ref). */
+export function semReflexo(o: Object3D | null) {
+  if (!o) return undefined;
+  foraDoReflexo.add(o);
+  return () => {
+    foraDoReflexo.delete(o);
+  };
+}
 
 export const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 export const mix = (a: number, b: number, t: number) => a + (b - a) * t;

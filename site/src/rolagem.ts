@@ -18,7 +18,8 @@ let gatilho: ScrollTrigger | null = null;
  */
 export function iniciarRolagemSuave(movimentoReduzido: boolean) {
   if (movimentoReduzido) return () => {};
-  lenis = new Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 0.85, touchMultiplier: 1.3 });
+  // lerp mais alto = resposta mais rápida à roda do mouse (menos sensação de atraso), ainda suave
+  lenis = new Lenis({ lerp: 0.15, smoothWheel: true, wheelMultiplier: 0.9, touchMultiplier: 1.3 });
   lenis.on('scroll', ScrollTrigger.update);
   const tique = (tempo: number) => lenis?.raf(tempo * 1000);
   gsap.ticker.add(tique);

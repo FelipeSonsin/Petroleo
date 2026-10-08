@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
-  AdditiveBlending, BufferAttribute, BufferGeometry, CatmullRomCurve3, Color, type Curve, Points, PointsMaterial,
-  ShaderMaterial, TubeGeometry, Vector3,
+  AdditiveBlending, Box3, BufferAttribute, BufferGeometry, CatmullRomCurve3, Color, type Curve, Frustum, Matrix4, Points,
+  PointsMaterial, ShaderMaterial, Sphere, TubeGeometry, Vector3,
 } from 'three';
 import { cena, type Qualidade } from '../estado';
 import { caminhoDoOleo, pontoNaTabela, tabela } from './trajetos';
-import { texturaBrilho } from './util';
+import { semReflexo, texturaBrilho } from './util';
 
 const p = new Vector3();
+const visao = new Frustum();
+const projecao = new Matrix4();
 
 type Props = {
   curva: Curve<Vector3>;
@@ -25,8 +27,13 @@ type Props = {
 
 /** Partículas luminosas correndo por dentro de uma curva, até a "frente" do fluxo. */
 export function Corrente({ curva, n, cores, pesos, tamanho, velocidade, frente, amostras = 4096 }: Props) {
-  const { pontos, tab, offs, base } = useMemo(() => {
+  const { pontos, tab, offs, base, esfera } = useMemo(() => {
     const tab = tabela(curva, amostras);
+    // esfera que envolve o trajeto: se ela está fora da tela, não calcula as partículas no quadro
+    const caixa = new Box3();
+    for (let i = 0; i < tab.length; i += 3) caixa.expandByPoint(p.set(tab[i], tab[i + 1], tab[i + 2]));
+    const esfera = caixa.getBoundingSphere(new Sphere());
+    esfera.radius += tamanho * 2;
     const offs = new Float32Array(n);
     const base = new Float32Array(n * 3);
     const cor = new Color();
@@ -60,12 +67,18 @@ export function Corrente({ curva, n, cores, pesos, tamanho, velocidade, frente, 
     m.customProgramCacheKey = () => `fluxo-${tamanho}`;
     const pontos = new Points(g, m);
     pontos.frustumCulled = false;
-    return { pontos, tab, offs, base };
+    return { pontos, tab, offs, base, esfera };
   }, [curva, n, cores, pesos, tamanho, amostras]);
 
   useFrame((estado) => {
     const f = frente();
     pontos.visible = f > 0.001;
+    if (!pontos.visible) return;
+    const cam = estado.camera;
+    cam.updateMatrixWorld();
+    projecao.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    visao.setFromProjectionMatrix(projecao);
+    pontos.visible = visao.intersectsSphere(esfera);
     if (!pontos.visible) return;
     const t = estado.clock.elapsedTime;
     const pos = pontos.geometry.getAttribute('position') as BufferAttribute;
@@ -126,7 +139,7 @@ export function FluxoDoOleo({ qualidade }: { qualidade: Qualidade }) {
     return 1;
   };
   return (
-    <group>
+    <group ref={semReflexo}>
       <TuboDeLuz curva={curva} frente={frente} />
       <Corrente
         curva={curva}
@@ -222,7 +235,7 @@ export function SaidasDoSeparador() {
   }, []);
   const frente = () => Math.max(0, (cena.separador - 0.35) / 0.65);
   return (
-    <group>
+    <group ref={semReflexo}>
       <Corrente curva={curvas.oleo} n={260} cores={SO_OLEO} tamanho={1.1} velocidade={0.045} frente={frente} amostras={512} />
       <Corrente curva={curvas.gas} n={420} cores={SO_GAS} tamanho={1.2} velocidade={0.03} frente={frente} amostras={1024} />
       <Corrente curva={curvas.agua} n={200} cores={SO_AGUA} tamanho={1.0} velocidade={0.05} frente={frente} amostras={512} />

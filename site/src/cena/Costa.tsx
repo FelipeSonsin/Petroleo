@@ -13,7 +13,7 @@ import { Corrente, OLEO, sanear } from './Fluxos';
 import { Halo, registrarPontos, PONTOS } from './Plataforma';
 import { precarregar, useModelo } from './modelos';
 import { fbm2, pontoNaTabela, ruido2, tabela } from './trajetos';
-import { GLSL_RUIDO, mix, suave, texturaBrilho } from './util';
+import { GLSL_RUIDO, foraDoReflexo, mix, semReflexo, suave, texturaBrilho } from './util';
 
 const ALTURA_REFINARIA = 5;
 
@@ -387,7 +387,9 @@ function Arrebentacao() {
         }
       `,
     });
-    return new Mesh(g, m);
+    const faixa = new Mesh(g, m);
+    foraDoReflexo.add(faixa);
+    return faixa;
   }, []);
   useFrame((e) => {
     (malha.material as ShaderMaterial).uniforms.uTempo.value = e.clock.elapsedTime;
@@ -464,10 +466,13 @@ function Transito({ qualidade }: { qualidade: Qualidade }) {
       blending: AdditiveBlending, sizeAttenuation: true, fog: true,
     }));
     pontos.frustumCulled = false;
+    foraDoReflexo.add(pontos);
     return { pontos, tabelas, offs, n };
   }, [qualidade]);
   const p = useMemo(() => new Vector3(), []);
   useFrame((e) => {
+    // o litoral só aparece com a câmera perto dele (ver Costa): fora disso não gasta tempo
+    if (e.camera.position.x > -11000) return;
     const t = e.clock.elapsedTime;
     const attr = pontos.geometry.getAttribute('position') as BufferAttribute;
     const arr = attr.array as Float32Array;
@@ -558,6 +563,7 @@ function Vapor() {
     geo.setAttribute('aFase', new InstancedBufferAttribute(fase, 1));
     inst.instanceMatrix.needsUpdate = true;
     inst.frustumCulled = false;
+    foraDoReflexo.add(inst);
     return inst;
   }, []);
   useFrame((e) => {
@@ -624,7 +630,8 @@ function Refinaria() {
 
   return (
     <group>
-      <primitive object={scene} />
+      {/* a refinaria fica longe da margem: fora do reflexo do mar (são 300 mil triângulos) */}
+      <primitive object={scene} ref={semReflexo} />
       {tocha && <ChamaPequena posicao={tocha} />}
       <LuzesDaRefinaria />
       <Halo posicao={[REFINARIA.x, 60, REFINARIA.z]} escala={1600} cor="#ffb066" opacidade={0.035} />
@@ -769,7 +776,7 @@ function Distribuicao() {
     material.uniforms.uTempo.value = e.clock.elapsedTime;
   });
   return (
-    <group>
+    <group ref={semReflexo}>
       {tubos.map((g, i) => (
         <mesh key={`t${i}`} geometry={g} material={material} />
       ))}

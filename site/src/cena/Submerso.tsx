@@ -6,7 +6,7 @@ import {
 } from 'three';
 import { cena, type Qualidade } from '../estado';
 import { luzDaAgua } from './Ambiente';
-import { GLSL_RUIDO, texturaBrilho } from './util';
+import { GLSL_RUIDO, foraDoReflexo, texturaBrilho } from './util';
 
 const FRIO = new Color('#7fc6ff');
 const QUENTE = new Color('#ffb36b');
@@ -77,6 +77,7 @@ export function RaiosDeLuz({ qualidade }: { qualidade: Qualidade }) {
     const malha = new InstancedMesh(geo, mat, n);
     malha.frustumCulled = false;
     malha.renderOrder = 3;
+    foraDoReflexo.add(malha);
     for (let i = 0; i < n; i++) malha.setColorAt(i, FRIO);
     const base = Array.from({ length: n }, () => [Math.random() * caixa, Math.random() * caixa]);
     const larguras = Array.from({ length: n }, () => 7 + Math.random() * 22);
@@ -178,6 +179,7 @@ export function Plancton({ qualidade }: { qualidade: Qualidade }) {
     m.uniforms.uMapa.value = texturaBrilho();
     const pts = new Points(g, m);
     pts.frustumCulled = false;
+    foraDoReflexo.add(pts);
     return { pontos: pts, base };
   }, [n]);
 
@@ -226,6 +228,7 @@ export function Bokeh({ qualidade }: { qualidade: Qualidade }) {
     });
     const pts = new Points(g, m);
     pts.frustumCulled = false;
+    foraDoReflexo.add(pts);
     return { pontos: pts, base };
   }, [n]);
 

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
   AdditiveBlending, BufferGeometry, CatmullRomCurve3, Group, Line, LineBasicMaterial,
@@ -7,7 +7,7 @@ import {
 import { cena, leitura } from '../estado';
 import { ALIVIADOR, SISMICO, SONDA } from '../mundo';
 import { precarregar, useModelo } from './modelos';
-import { GLSL_RUIDO } from './util';
+import { GLSL_RUIDO, semReflexo } from './util';
 import { sanear } from './Fluxos';
 
 /** Rota do aliviador que já partiu carregado rumo à costa (a câmera o acompanha). */
@@ -94,6 +94,8 @@ function Streamers() {
   }, []);
   const luzes = useRef<Group>(null);
   const grupo = useRef<Group>(null);
+  // os cabos ficam debaixo d'água e só aparecem no corte: fora do reflexo do mar
+  useLayoutEffect(() => semReflexo(grupo.current), []);
   useFrame((e) => {
     const s = cena.sismica;
     material.opacity = Math.min(1, s * 6) * 0.55 + 0.08;
