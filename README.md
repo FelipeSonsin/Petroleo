@@ -12,6 +12,8 @@ Este é o **único guia** do projeto.
 
 ## 1. Abrir e apresentar
 
+**Online:** https://petroleo-alpha.vercel.app (projeto `petroleo` na Vercel). O código está em https://github.com/FelipeSonsin/Petroleo, e cada `git push` na branch `main` publica sozinho uma versão nova (a Vercel compila a pasta `site/` com `npm run build`).
+
 No Windows, dê dois cliques em `site/Iniciar_Apresentacao.cmd` (instala na primeira vez, gera o build e abre `http://localhost:4173`). Depois disso funciona sem internet.
 
 Pelo terminal (Node.js 20+):
